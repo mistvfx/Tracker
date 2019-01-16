@@ -1,6 +1,7 @@
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.recycleview import RecycleView
 from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 from kivy.uix.label import Label
@@ -14,18 +15,18 @@ from kivy.properties import *
 from kivy.graphics import *
 from kivy.lang import Builder
 
-from pages import table, monthlyPopup, Dialog
+from pages import table, monthlyPopup, Dialog, infoPopup
 from pages.specialFeatures import *
-from db import getInfo, monthlyWrkHours, userSettings
+from db import getInfo, monthlyWrkHours, userSettings, usersListManip
 import datetime
 
 id = []
 names = []
-date = []
+date = ""
 months = ['January ', 'Feburary ', 'March ', 'April ', 'May ', 'June ', 'July ', 'August ', 'September ', 'October ', 'November ', 'December ']
 
 Builder.load_string("""
-<dayBtn>:
+<DayBtn>:
     text: 'Day'
     font_name: 'fonts/moon-bold.otf'
     size_hint_x: 0.1
@@ -38,7 +39,7 @@ Builder.load_string("""
         y: self.parent.y
         x: self.parent.x
 
-<monthInfoBtn>:
+<MonthInfoBtn>:
     text: 'Month'
     font_name: 'fonts/moon-bold.otf'
     size_hint_x: 0.1
@@ -53,7 +54,7 @@ Builder.load_string("""
         y: self.parent.y
         x: self.parent.x
 
-<settingsBtn>:
+<SettingsBtn>:
     text: 'Settings'
     font_name: 'fonts/moon-bold.otf'
     size_hint_x: 0.1
@@ -65,14 +66,13 @@ Builder.load_string("""
         y: self.parent.y
         x: self.parent.x
 
-<user>:
+<User>:
     size_hint_y: None
     BoxLayout:
         orientation: 'horizontal'
-        size_hint_y: 1
+        size_hint_y: None
         pos: root.pos
         size: root.size
-
         canvas.before:
             Color:
                 rgba: (0, 0, 0, 0.1)
@@ -90,18 +90,20 @@ Builder.load_string("""
             font_name: 'fonts/GoogleSans-Bold.ttf'
             color: (0, 0, 0, 1)
             size_hint_x: 0.7
-        dayBtn:
+        DayBtn:
             on_release: self.getDayInfo(artistLabel.text)
-        monthInfoBtn:
+        MonthInfoBtn:
             on_release: self.getMonthInfo(artistLabel.text)
-        settingsBtn:
+        SettingsBtn:
             on_release: self.settingsPop(artistLabel.text)
 """)
+
+#layout.bind(minimum_height=layout.setter('height'))
 
 def formatDate(date):
     #datetime.datetime.strptime(date[len(date)-1], '%d.%m.%Y').date()
     dt = date.split(".")
-    return [dt[0], dt[1], dt[2]]
+    return ("{}:{}:{}".format(dt[0], dt[1].zfill(2), dt[2]))
 
 def formatDateTitle(date):
     global months
@@ -109,19 +111,16 @@ def formatDateTitle(date):
     yr = months[int(dt[1])-1] + "-" + str(dt[2])
     return yr
 
-class user(Widget):
+class User(Widget):
     Artist = StringProperty("")
     def __init__(self, ArtistId, ArtistName):
-        super(user, self).__init__()
+        super(User, self).__init__()
         self.ArtistId = ArtistId
         self.ArtistName = ArtistName
         texts = (str(ArtistId) + ":" + ArtistName)
         self.Artist = texts
 
 class UserInfo(TouchRippleBehavior, Label):
-    def __init__(self, **kwargs):
-        super(UserInfo, self).__init__(**kwargs)
-
     def on_touch_down(self, touch):
         collide_point = self.collide_point(touch.x, touch.y)
         if collide_point:
@@ -137,10 +136,7 @@ class UserInfo(TouchRippleBehavior, Label):
             return True
         return False
 
-class dayBtn(Button, MouseOver):
-    def __init__(self, **args):
-        super(dayBtn, self).__init__(**args)
-
+class DayBtn(Button, MouseOver):
     def on_hover(self):
         self.background_color = (1, 0, 0, 0.5)
 
@@ -149,26 +145,10 @@ class dayBtn(Button, MouseOver):
 
     def getDayInfo(self, artistID):
         global date
+        infoPopup.InfoTabAdmin(int(artistID.split(":")[0]), formatDate(date))
+        #getInfo.openPopup('admin', int(artistID.split(":")[0]), formatDate(date))
 
-        getInfo.id.append(int(artistID.split(":")[0]))
-        getInfo.date.append(formatDate(date[len(date)-1]))
-
-        try:
-            getInfo.openPopup('admin')
-        except Exception as e:
-            print(e)
-            def callback(instance):
-                if instance.text == 'OK':
-                    pop.dismiss()
-            closePopBtn = Button(text="OK", size_hint=(1, 0.25))
-            closePopBtn.bind(on_release=callback)
-            pop = Dialog.dialog("No Data !!!", "No data Available for the selected date !!", closePopBtn)
-            pop.open()
-
-class settingsBtn(Button, MouseOver):
-    def __init__(self, **args):
-        super(settingsBtn, self).__init__(**args)
-
+class SettingsBtn(Button, MouseOver):
     def on_hover(self):
         self.background_color = (0, 1, 0, 0.5)
 
@@ -180,10 +160,7 @@ class settingsBtn(Button, MouseOver):
         userSettings.fetch_data(artistID)
         userSettings.UserSettingPop(artistID).open()
 
-class monthInfoBtn(Button, MouseOver):
-    def __init__(self, **args):
-        super(monthInfoBtn, self).__init__(**args)
-
+class MonthInfoBtn(Button, MouseOver):
     def on_hover(self):
         self.background_color = (0, 0, 1, 0.5)
 
@@ -199,19 +176,22 @@ class monthInfoBtn(Button, MouseOver):
         monthlyPopup.workTime()
         monthlyPopup.pop()
 
-class userList(ScrollView):
+class UserList(ScrollView):
     def __init__(self):
-        super(userList, self).__init__()
+        super(UserList, self).__init__()
         self.listUI()
 
     def listUI(self):
         global id, names
+        from db import usersListManip
+
+        dets = usersListManip.getUserInfo()
 
         layout = GridLayout(cols=1, spacing=1, padding=(20, 0, 0, 0), size_hint=(1, None))
         layout.bind(minimum_height=layout.setter('height'))
 
         for i in range(len(id)):
-            lbl = user(id[i], names[i])
+            lbl = User(id[i], names[i])
             layout.add_widget(lbl)
 
         self.add_widget(layout)

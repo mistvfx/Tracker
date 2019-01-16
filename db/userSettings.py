@@ -180,10 +180,15 @@ class UserInfoTab(BoxLayout):
         self.user_dept = Data[3]
 
     def save_user_details(self):
-        db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+        try:
+            db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+            db_name = "tracker"
+        except:
+            db = pymysql.connect("192.168.1.181", "mmt", "py@123", "MMT", autocommit=True)
+            db_name = "MMT"
         cur = db.cursor()
-        cur.execute("UPDATE tracker.user_master SET ID = '%s', IP = '%s', Name = '%s', Department = '%s' WHERE ID = '%s'"%(self.ids.userid.text, self.ids.userip.text, self.ids.username.text, self.ids.userdept.text, Data[0]))
-        cur.execute("CREATE TABLE IF NOT EXISTS `tracker`.`%s` (`S.No` INT NOT NULL AUTO_INCREMENT, `window_name` VARCHAR(225) NULL, `process_name` VARCHAR(225) NULL, `process_id` INT NULL, `date` DATE NULL, `total_time` VARCHAR(45) NULL, PRIMARY KEY (`S.No`));"%(elf.ids.userid.text))
+        cur.execute("UPDATE %s.user_master SET ID = '%s', IP = '%s', Name = '%s', Department = '%s' WHERE ID = '%s'"%(db_name, self.ids.userid.text, self.ids.userip.text, self.ids.username.text, self.ids.userdept.text, Data[0]))
+        cur.execute("CREATE TABLE IF NOT EXISTS `%s`.`%s` (`S.No` INT NOT NULL AUTO_INCREMENT, `window_name` VARCHAR(225) NULL, `process_name` VARCHAR(225) NULL, `process_id` INT NULL, `date` DATE NULL, `total_time` VARCHAR(45) NULL, PRIMARY KEY (`S.No`));"%(db_name, self.ids.userid.text))
 
     def deploy_tracking(self):
         pass
@@ -192,9 +197,14 @@ class UserInfoTab(BoxLayout):
         pass
 
 def fetch_data(id):
-    db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+    try:
+        db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+        db_name = "tracker"
+    except:
+        db = pymysql.connect("192.168.1.181", "mmt", "py@123", "MMT", autocommit=True)
+        db_name = "MMT"
     cur = db.cursor()
-    cur.execute("SELECT ID, IP, Name, Department FROM tracker.user_master WHERE ID = '%s' "%(id))
+    cur.execute("SELECT ID, IP, Name, Department FROM %s.user_master WHERE ID = '%s' "%(db_name, id))
     global Data
     pre_data = []
     for data in cur.fetchone():

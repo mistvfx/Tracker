@@ -2,10 +2,15 @@ import pymysql
 from socket import *
 
 def check_available_ips():
-    db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+    try:
+        db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+        db_name = "tracker"
+    except:
+        db = pymysql.connect("192.168.1.181", "mmt", "py@123", "MMT", autocommit=True)
+        db_name = "MMT"
     cur = db.cursor()
     ips = []
-    cur.execute("SELECT IP FROM tracker.`user_master` WHERE ID != 1000")
+    cur.execute("SELECT IP FROM %s.`user_master` WHERE ID != 1000"%(db_name))
     for data in cur.fetchall():
         ips.append(data[0])
     cur.close()
@@ -24,7 +29,12 @@ def is_up(addr):
         s.close()
 
 def scan_all_ip():
-    db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+    try:
+        db = pymysql.connect("192.168.1.224", "root", "user@123", "tracker", autocommit=True)
+        db_name = "tracker"
+    except:
+        db = pymysql.connect("192.168.1.181", "mmt", "py@123", "MMT", autocommit=True)
+        db_name = "MMT"
     cur = db.cursor()
 
     avail_ips = check_available_ips()
@@ -43,7 +53,7 @@ def scan_all_ip():
                 print('%s \t- %s [ALREADY AVAILABLE]' %(addr, getfqdn(addr)))
                 continue
             else:
-                cur.execute("INSERT INTO tracker.`user_master` (ID, IP, Name, Department, Password) VALUES('%s', '%s', '%s', 'ARTIST', '%s')"%(addr.split(".")[-1], addr, getfqdn(addr), addr.split(".")[-1]))
+                cur.execute("INSERT INTO %s.`user_master` (ID, IP, Name, Department, Password) VALUES('%s', '%s', '%s', 'ARTIST', '%s')"%(db_name, addr.split(".")[-1], addr, getfqdn(addr), addr.split(".")[-1]))
                 new += 1
 
     if new != 0:

@@ -11,12 +11,12 @@ def checkCredentials(username, password):
 
     cur = db.cursor()
     try:
-        cur.execute("SELECT ID, Name, Department, Password FROM {}.user_master WHERE Status = 'OPEN'".format(db_name))
+        cur.execute("SELECT ID, Name, Department, Password FROM %s.user_master WHERE Status = 'OPEN'"%(db_name))
     except:
-        cur.execute("CREATE TABLE IF NOT EXISTS `{}`.`user_master` (`ID` INT NOT NULL, `IP` VARCHAR(45) NOT NULL, `Name` VARCHAR(45) NOT NULL, `Department` VARCHAR(45) NOT NULL, `Password` VARCHAR(45) NOT NULL, `Status` VARCHAR(45) NOT NULL DEFAULT 'OPEN', `email` VARCHAR(45) NULL, `LR` VARCHAR(45) NOT NULL DEFAULT 0, PRIMARY KEY (`ID`));".format(db.db_name))
+        cur.execute("CREATE TABLE IF NOT EXISTS `%s`.`user_master` (`ID` INT NOT NULL, `IP` VARCHAR(45) NOT NULL, `Name` VARCHAR(45) NOT NULL, `Department` VARCHAR(45) NOT NULL, `Password` VARCHAR(45) NOT NULL, `Status` VARCHAR(45) NOT NULL DEFAULT 'OPEN', `email` VARCHAR(45) NULL, `LR` VARCHAR(45) NOT NULL DEFAULT 0, PRIMARY KEY (`ID`));"%(db_name))
         cur1 = db.cursor()
-        cur1.execute("INSERT INTO {}.`user_master` (ID, IP, Name, Department, Password, LR) VALUES('1000', '192.168.1.224', 'ADMIN', 'ADMIN', '0')".format(db_name))
-        cur.execute("SELECT ID, Name, Department, Password FROM {}.user_master WHERE Status = 'OPEN' ".format(db_name))
+        cur1.execute("INSERT INTO %s.`user_master` (ID, IP, Name, Department, Password, LR) VALUES('1000', '192.168.1.224', 'ADMIN', 'ADMIN', '1000', '0')"%(db_name))
+        cur.execute("SELECT ID, Name, Department, Password FROM %s.user_master WHERE Status = 'OPEN' "%(db_name))
     finally:
         pass
 

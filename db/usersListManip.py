@@ -9,7 +9,7 @@ def getUserInfo():
         db = pymysql.connect("192.168.1.181", "mmt", "py@123", "MMT", autocommit=True)
         db_name = "MMT"
     cur = db.cursor()
-    cur.execute("SELECT ID, Name, Department, Password FROM {}.user_master WHERE Status = 'OPEN' AND ID != 1000".format(db_name))
+    cur.execute("SELECT ID, Name, Department, Password FROM %s.user_master WHERE Status = 'OPEN' AND ID != 1000"%(db_name))
 
     userData = { 'artistId': [],
                 'artistName': [],
